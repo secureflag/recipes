@@ -1,0 +1,126 @@
+#!/bin/bash
+
+# commit-msg hook: Checks if commit message contains GHSA IDs.
+
+# CONFIGURATION: Set these as environment variables or edit here
+REMOTE="origin"                # Git remote name (default: origin)
+# Generate GITHUB_TOKEN in https://github.com/settings/tokens
+GITHUB_TOKEN="${GITHUB_TOKEN:-}"           # GitHub PAT with security advisory read access
+# Generate SECUREFLAG_API_TOKEN in https://www.secureflag.com/management/index.html#/settings
+SECUREFLAG_API_TOKEN="${SECUREFLAG_API_TOKEN:-}"   # SecureFlag API token
+SECUREFLAG_API_ENDPOINT="${SECUREFLAG_API_ENDPOINT:-https://api.secureflag.com/rest/management/v2/users/hasCompletedTraining}" # SecureFlag API endpoint
+
+# Ensure required tools are available
+if ! command -v jq &> /dev/null; then
+  echo "[secureflag-advisory-training] WARNING: skipping training verification, jq is required but not installed."
+  exit 0
+fi
+
+# Fail if required config is missing
+if [[ -z "$GITHUB_TOKEN" || -z "$SECUREFLAG_API_TOKEN" ]]; then
+  echo "[secureflag-advisory-training] ERROR: GITHUB_TOKEN and SECUREFLAG_API_TOKEN must be set as environment variables."
+  exit 1
+fi
+
+# Get current GitHub repository
+GITHUB_REPO=$(git config --get "remote.$REMOTE.url" | sed -n 's#.*github.com[:/]\([^/]\+\)/\([^/.]\+\).*#\1/\2#p')
+if [[ -z "$GITHUB_REPO" || ! "$GITHUB_REPO" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$ ]]; then
+  echo "[secureflag-advisory-training] ERROR: Could not determine GitHub repository (owner/repo) from git remote."
+  exit 1
+fi
+
+# If not set, use git config user.email as committer email
+COMMITTER_EMAIL=${COMMITTER_EMAIL:-$(git config user.email)}
+if [[ -z "$COMMITTER_EMAIL" ]]; then
+  echo "[secureflag-advisory-training] ERROR: Could not determine committer email from git config."
+  exit 1
+fi
+
+# Get commit message 
+COMMIT_MSG=$(cat "$1")
+
+# Extract GHSA IDs from commit message
+GHSA_IDS=$(echo "$COMMIT_MSG" | grep -oE 'GHSA-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}' | sort -u | tr '\n' ' ')
+if [[ -z "$GHSA_IDS" ]]; then
+  # No GHSA IDs found, allow commit
+  exit 0
+fi
+
+# For each GHSA ID, check advisory via GitHub API
+ADVISORY_MAP=""
+for GHSA_ID in $GHSA_IDS; do
+  RESPONSE=$(curl -s \
+    -H "Authorization: Bearer $GITHUB_TOKEN" \
+    -H "Accept: application/vnd.github+json" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    "https://api.github.com/repos/$GITHUB_REPO/security-advisories/$GHSA_ID")
+
+  # Check status field in response
+  if [[ "$(echo "$RESPONSE" | jq -r '.status')" == "403" ]]; then
+    echo "[secureflag-advisory-training] ERROR: Access denied to security advisory $GHSA_ID. Check your GITHUB_TOKEN permissions."
+    exit 1
+  elif [[ "$(echo "$RESPONSE" | jq -r '.status')" == "404" ]]; then
+    echo "[secureflag-advisory-training] ERROR: Advisory $GHSA_ID not found in repository $GITHUB_REPO."
+    continue
+  fi
+
+  SUMMARY=$(echo "$RESPONSE" | jq -r '.summary // empty')
+  if [[ -n "$SUMMARY" ]]; then
+    # Found advisory, add to map
+    ADVISORY_MAP+="$GHSA_ID|$SUMMARY"$'\n'
+  else
+    echo "[secureflag-advisory-training] WARNING: Advisory $GHSA_ID not found in $GITHUB_REPO"
+  fi
+done
+
+if [[ -z "$ADVISORY_MAP" ]]; then
+  # No valid advisories found, allow commit
+  exit 0
+fi
+
+# For each advisory, call SecureFlag API to verify training
+VULNERABILITIES=""
+while IFS='|' read -r GHSA_ID SUMMARY; do
+  [[ -z "$GHSA_ID" ]] && continue
+  echo "[secureflag-advisory-training] Verifying training for $GHSA_ID ($SUMMARY)"
+  response=$(curl -s \
+    -H "Authorization: Bearer $SECUREFLAG_API_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "{\"issueTitle\":\"$SUMMARY\",\"user\":\"$COMMITTER_EMAIL\",\"days\":\"365\"}" \
+    "$SECUREFLAG_API_ENDPOINT")
+  result=$(echo "$response" | jq -r '.result')
+  error=$(echo "$response" | jq -r '.error')
+  errorMsg=$(echo "$response" | jq -r '.errorMsg')
+  vulnerability=$(echo "$response" | jq -r '.vulnerability')
+  
+  if [[ "$error" == "true" ]]; then
+    if [[ "$errorMsg" == "EmptyUser" ]]; then
+      echo "[secureflag-advisory-training] WARNING: skipping training verification, \"$COMMITTER_EMAIL\" is not a valid user in SecureFlag. Please ensure your email is registered, or export COMMITTER_EMAIL with a valid SecureFlag user email."
+    elif [[ "$errorMsg" == "EmptyCategory" ]]; then
+      # If the category is empty, it means that the summary of the GHSA advisory wasn't descriptive enough to determine the vulnerability type
+      echo "[secureflag-advisory-training] WARNING: skipping training verification, can't determine vulnerability type for $GHSA_ID. Please ensure the advisory summary is descriptive enough."
+    else
+      # If it's a generic API error, just log it
+      echo "[secureflag-advisory-training] WARNING: skipping training verification, API returned $errorMsg"
+    fi
+  elif [[ "$result" == "true" ]]; then
+    echo "[secureflag-advisory-training] Training verification succeeded: \"$COMMITTER_EMAIL\" completed training on $vulnerability ($GHSA_ID)"
+  else
+    echo "[secureflag-advisory-training] Training verification failed: \"$COMMITTER_EMAIL\" has not completed required training on $vulnerability ($GHSA_ID)"
+    VULNERABILITIES+="$vulnerability"$'\n'
+  fi
+done <<< "$ADVISORY_MAP"
+
+if [[ -n "$VULNERABILITIES" ]]; then
+  echo
+  echo "[secureflag-advisory-training] ❌ Git action blocked. You must complete training for the following vulnerabilities before committing:"
+  while IFS= read -r vuln; do
+    [[ -z "$vuln" ]] && continue
+    encoded=$(echo "$vuln" | jq -Rr '@uri')
+    echo "- $vuln (https://www.secureflag.com/go.html?type=search&q=$encoded)"
+  done <<< "$VULNERABILITIES"
+  exit 1
+fi
+
+# All checks passed
+exit 0
