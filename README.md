@@ -14,4 +14,4 @@ Bring SecureFlag training and guidance to your local workflow with Git hooks!
 
 Automatically enforce SecureFlag's vulnerability training compliance whenever a commit references a GitHub Security Advisory (GHSA).
 
-📖 See the [`githooks/README.md`](githooks/README.md) for setup instructions and details.
+📖 See the [`githooks/README.md`](/githooks/README.md) for setup instructions and details.
