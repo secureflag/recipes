@@ -18,6 +18,6 @@ Automatically enforce SecureFlag's vulnerability training compliance whenever a 
 
 Leverage the power of the SecureFlag APIs with a Python script that retrieves all users in your organization, along with their assigned learning paths and exercises.
 
-This script demonstrates how to collect user details, fetch assignments and activities for each user, and export the combined results to a CSV report—giving you actionable insights and a practical example of API integration.
+This script demonstrates how to collect user details, fetch assignments and activities for each user, and export the combined results to a CSV report; giving you practical examples of API integration.
 
 💻 Download and customize the [`get-users-and-assignments.py`](users_assignments_report/get-users-and-assignments.py) script to create the reports you need!
