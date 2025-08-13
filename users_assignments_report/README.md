@@ -359,8 +359,6 @@ The script will create `user_assignments.csv` in the current directory.
 - **Status**: Current status (`NOT_RUN`, `SOLVED`, etc.).
 - **Type**: Whether the activity is an `EXERCISE` or `LEARNING_PATH`.
 
----
-
 ## Troubleshooting & Notes
 
 **Common issues:**
