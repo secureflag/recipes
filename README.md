@@ -6,9 +6,7 @@ Here you'll find handy scripts, code snippets, and small demo apps showcasing ho
 
 Whether you are exploring the API, testing out ideas, or looking for inspiration on how to integrate SecureFlag into your own organization, these examples are here to help you get up and running faster.
 
-## Recipes
-
-### Git hooks
+## Git hooks
 
 Bring SecureFlag training and guidance to your local workflow with Git hooks!
 
@@ -16,7 +14,7 @@ Automatically enforce SecureFlag's vulnerability training compliance whenever a 
 
 📖 See the [`githooks/README.md`](/githooks/README.md) for setup instructions and details.
 
-### Users' assignment report
+## Users' assignment report
 
 Leverage the power of the SecureFlag APIs with a Python script that retrieves all users in your organization, along with their assigned learning paths or exercises.
 
