@@ -20,4 +20,4 @@ Leverage the power of the SecureFlag APIs with a Python script that retrieves al
 
 This script demonstrates how to collect user details, fetch assignments and activities for each user, and export the combined results to a CSV report; giving you practical examples of API integration.
 
-💻 Download and customize the [`get-users-and-assignments.py`](users_assignments_report/get-users-and-assignments.py) script to create the reports you need!
+💻 Read the [`documentation`](/users_assignments_report/) to download and customize the script to create the reports you need!

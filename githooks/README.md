@@ -12,7 +12,7 @@ This directory contains a `commit-msg` Git hook that enforces SecureFlag vulnera
   - Verifies, via the SecureFlag API, whether the committer has completed the required training for the referenced vulnerability.
 - **Blocks the commit** if the committer has not completed the required training, and provides instructions and direct links to the relevant SecureFlag training.
 
-## Installation
+## Installation and Usage
 
 1. **Copy the hook to your repository's `.git/hooks/` directory:**
 
