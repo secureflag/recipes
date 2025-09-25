@@ -22,7 +22,7 @@ This script demonstrates how to collect user details, fetch assignments and acti
 
 💻 Read the [`documentation`](/users_assignments_report/) to download and customize the script to create the reports you need!
 
-## Users’ assignment removal
+## Users' assignment removal
 
 Easily remove SecureFlag assignments with a Python script that validates activities, resolves UUIDs, and removes user assignments through the APIs. 
 The script fetches fresh catalogs, checks input for errors, and provides clear per-user summaries on completion.
