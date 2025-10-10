@@ -99,6 +99,9 @@ while IFS='|' read -r GHSA_ID SUMMARY; do
     elif [[ "$errorMsg" == "EmptyCategory" ]]; then
       # If the category is empty, it means that the summary of the GHSA advisory wasn't descriptive enough to determine the vulnerability type
       echo "[secureflag-advisory-training] WARNING: skipping training verification, can't determine vulnerability type for $GHSA_ID. Please ensure the advisory summary is descriptive enough."
+    elif [[ "$errorMsg" == "unauthorized" ]]; then
+      echo "[secureflag-advisory-training] ERROR: Authentication failed. Please check your SECUREFLAG_API_TOKEN."
+      exit 1
     else
       # If it's a generic API error, just log it
       echo "[secureflag-advisory-training] WARNING: skipping training verification, API returned $errorMsg"
