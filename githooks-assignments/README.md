@@ -1,22 +1,22 @@
-# SecureFlag Assignment Completion Commit Hook
+# SecureFlag Assignment Completion Pre-Push Hook
 
-The `commit-msg-assignments` hook enforces SecureFlag assignment completion requirements before allowing commits.
+The `pre-push-assignments` hook enforces SecureFlag assignment completion requirements before allowing pushes.
 
 ## What does it do?
 
-- Verifies that the committer has met one of the configurable assignment requirements:
+- Verifies that the user has met one of the configurable assignment requirements:
   - **Completed initial assignments**: All onboarding or initial training assignments are complete
   - **Completed pending assignments**: All currently pending assignments are complete
   - **No expired assignments**: The user has no assignments that have passed their deadline
-- **Blocks the commit** if the committer has not met the configured requirement, with clear instructions on what needs to be completed.
+- **Blocks the push** if the user has not met the configured requirement, with clear instructions on what needs to be completed.
 
 ## Installation
 
 1. **Copy the hook to your repository's `.git/hooks/` directory:**
 
    ```sh
-   cp commit-msg-assignments .git/hooks/commit-msg
-   chmod +x .git/hooks/commit-msg
+   cp pre-push-assignments .git/hooks/pre-push
+   chmod +x .git/hooks/pre-push
    ```
 
 2. **Install dependencies:**
@@ -30,7 +30,7 @@ The `commit-msg-assignments` hook enforces SecureFlag assignment completion requ
      - `REQUIRE_COMPLETED_PENDING_ASSIGNMENTS`: Requires the user to have completed all pending assignments
      - `REQUIRE_NOT_EXPIRED_ASSIGNMENTS`: Requires the user to have no expired assignments
 
-   You can export these in your shell profile or set them before committing:
+   You can export these in your shell profile or set them before pushing:
 
    ```sh
    export SECUREFLAG_API_TOKEN=sf_xxx
@@ -41,13 +41,13 @@ The `commit-msg-assignments` hook enforces SecureFlag assignment completion requ
 
 ## Usage
 
-Once installed, the hook runs automatically on every commit. It will:
+Once installed, the hook runs automatically on every push. It will:
 
 1. Check which assignment requirement flag is set
 2. Verify your assignment status via the SecureFlag API
-3. Allow the commit if requirements are met, or block it with helpful error messages if not
+3. Allow the push if requirements are met, or block it with helpful error messages if not
 
-The hook runs on **every commit**, regardless of the commit message content.
+The hook runs on **every push**, checking requirements before code is pushed to the remote repository.
 
 ## Configuration
 
@@ -59,7 +59,7 @@ The hook runs on **every commit**, regardless of the commit message content.
 | `REQUIRE_COMPLETED_INITIAL_ASSIGNMENTS` | No (default: true) | Require completion of initial assignments |
 | `REQUIRE_COMPLETED_PENDING_ASSIGNMENTS` | No | Require completion of all pending assignments |
 | `REQUIRE_NOT_EXPIRED_ASSIGNMENTS` | No | Require no expired assignments |
-| `COMMITTER_EMAIL` | No | Override the email used for verification (defaults to git config user.email) |
+| `USER_EMAIL` | No | Override the email used for verification (defaults to git config user.email) |
 | `SECUREFLAG_API_ENDPOINT` | No | Override the SecureFlag API endpoint (defaults to the assignments endpoint) |
 
 **Important**: By default, the hook checks for completed initial assignments. You can override this by setting exactly ONE of the three requirement flags. Setting more than one will result in an error.
@@ -99,23 +99,23 @@ export REQUIRE_NOT_EXPIRED_ASSIGNMENTS=true
 ## How It Works
 
 1. **Flag Validation**: Verifies that exactly one requirement flag is set
-2. **Email Detection**: Gets the committer email from git config or `COMMITTER_EMAIL`
+2. **Email Detection**: Gets the user email from git config or `USER_EMAIL`
 3. **API Request**: Sends a targeted request to SecureFlag API with the specific requirement:
    - For initial assignments: `{"user":"email@example.com","hasCompletedInitialAssignments":true}`
    - For pending assignments: `{"user":"email@example.com","hasCompletedPendingAssignments":true}`
    - For expired assignments: `{"user":"email@example.com","hasNotExpiredAssignments":true}`
-4. **Decision**: Blocks the commit if the requirement is not met
+4. **Decision**: Blocks the push if the requirement is not met
 
 ## Error Handling
 
 The hook handles various error scenarios gracefully:
 
-- **Missing jq**: Displays a warning and allows the commit
-- **Missing token**: Blocks the commit with clear instructions
-- **No flag set**: Blocks the commit and explains which flags are available
-- **Multiple flags set**: Blocks the commit and shows which flags are currently set
-- **Invalid email**: Warns and allows the commit if the email isn't registered in SecureFlag
-- **API errors**: Warns and allows the commit if the SecureFlag API is unavailable
+- **Missing jq**: Displays a warning and allows the push
+- **Missing token**: Blocks the push with clear instructions
+- **No flag set**: Blocks the push and explains which flags are available
+- **Multiple flags set**: Blocks the push and shows which flags are currently set
+- **Invalid email**: Warns and allows the push if the email isn't registered in SecureFlag
+- **API errors**: Warns and allows the push if the SecureFlag API is unavailable
 
 ## Example Output
 
@@ -125,14 +125,14 @@ The hook handles various error scenarios gracefully:
 [secureflag-assignments] Assignment verification succeeded: "user@example.com" meets requirement: completed initial assignments
 ```
 
-### Blocked Commit
+### Blocked Push
 ```
 [secureflag-assignments] Verifying completed pending assignments for user@example.com
 
-[secureflag-assignments] ❌ Git action blocked. You must meet the following requirement before committing:
+[secureflag-assignments] ❌ Git push blocked. You must meet the following requirement before pushing:
 - completed pending assignments
 
-Visit https://www.secureflag.com/management to view your assignments.
+Visit https://www.secureflag.com/ to view your assignments.
 ```
 
 ### Multiple Flags Error
@@ -185,7 +185,7 @@ export REQUIRE_NOT_EXPIRED_ASSIGNMENTS=true
 ### "User is not a valid user in SecureFlag"
 Your git email must match your SecureFlag account email. Either:
 1. Update your git email: `git config user.email "your-secureflag-email@example.com"`
-2. Or set `COMMITTER_EMAIL` environment variable: `export COMMITTER_EMAIL="your-secureflag-email@example.com"`
+2. Or set `USER_EMAIL` environment variable: `export USER_EMAIL="your-secureflag-email@example.com"`
 
 ## Different Requirements for Different Environments
 
@@ -211,7 +211,7 @@ export REQUIRE_COMPLETED_PENDING_ASSIGNMENTS=true
 
 In emergencies, you can bypass the hook with:
 ```sh
-git commit --no-verify -m "your message"
+git push --no-verify
 ```
 
 However, this defeats the purpose of the security compliance check and is not recommended.
@@ -223,7 +223,7 @@ To use this hook in CI/CD pipelines:
 1. Install the hook in your CI environment
 2. Set `SECUREFLAG_API_TOKEN` and the appropriate requirement flag as CI secrets
 3. Ensure `jq` is available in the CI image
-4. The hook will run automatically on commits
+4. The hook will run automatically on pushes
 
 Example GitLab CI configuration:
 ```yaml
@@ -233,17 +233,17 @@ variables:
 
 before_script:
   - apt-get update && apt-get install -y jq
-  - cp commit-msg-assignments .git/hooks/commit-msg
-  - chmod +x .git/hooks/commit-msg
+  - cp pre-push-assignments .git/hooks/pre-push
+  - chmod +x .git/hooks/pre-push
 ```
 
 ## Combining with Other Hooks
 
-Since Git only allows one `commit-msg` hook at a time, you can:
+Since Git only allows one `pre-push` hook at a time, you can:
 
-1. **Combine with commit-msg-ghsa**: Create a wrapper script that runs both checks
+1. **Combine with other pre-push hooks**: Create a wrapper script that runs multiple checks
 2. **Use a hook manager**: Tools like [Husky](https://typicode.github.io/husky/) or [pre-commit](https://pre-commit.com/) support multiple hooks
-3. **Choose based on workflow**: Use GHSA hook for security advisory commits, assignments hook for general development
+3. **Chain with commit hooks**: Use this pre-push hook alongside commit-msg hooks for comprehensive validation
 
 ## Learn More
 
