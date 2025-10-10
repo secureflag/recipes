@@ -6,13 +6,37 @@ Here you'll find handy scripts, code snippets, and small demo apps showcasing ho
 
 Whether you are exploring the API, testing out ideas, or looking for inspiration on how to integrate SecureFlag into your own organization, these examples are here to help you get up and running faster.
 
-## Git hooks
+## Git Hooks
 
 Bring SecureFlag training and guidance to your local workflow with Git hooks!
 
+### Assignment Completion Hook
+
+Enforce SecureFlag assignment completion requirements before allowing commits.
+
+This hook verifies that developers have completed their SecureFlag training assignments before they can commit code, ensuring continuous security compliance across your team.
+
+**Key features:**
+- Blocks commits if required assignments are incomplete
+- Configurable requirements (initial assignments, pending assignments, or expired assignments)
+- Clear feedback with direct links to incomplete training
+- Easy setup with environment variables
+
+📖 Read the [Assignment Hook README](/githooks-assignments/README.md) for setup instructions and details.
+
+### GHSA Advisory Training Hook
+
 Automatically enforce SecureFlag's vulnerability training compliance whenever a commit references a GitHub Security Advisory (GHSA).
 
-📖 Read the Git hooks [`README.md`](/githooks/README.md) for setup instructions and details.
+This hook scans commit messages for GHSA IDs and verifies that the committer has completed the required training for those specific vulnerabilities.
+
+**Key features:**
+- Automatically detects GHSA IDs in commit messages
+- Verifies training completion via SecureFlag API
+- Provides direct links to required training modules
+- Integrates seamlessly with GitHub's security advisory system
+
+📖 Read the [GHSA Hook README](/githooks-ghsa/README.md) for setup instructions and details.
 
 ## Users' assignment report
 
