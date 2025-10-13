@@ -80,7 +80,7 @@ fi
 
 # Call SecureFlag API to verify assignment status
 # Note: Using a generic endpoint, adjust to actual SecureFlag API endpoint for assignments
-SECUREFLAG_API_ENDPOINT="${SECUREFLAG_API_ENDPOINT:-https://api.secureflag.com/rest/management/v2/users/assignments}"
+SECUREFLAG_API_ENDPOINT="${SECUREFLAG_API_ENDPOINT:-https://api.secureflag.com/rest/management/v2/users/hasCompletedTraining}"
 
 echo "[secureflag-assignments] Verifying $REQUIREMENT_NAME for $USER_EMAIL"
 response=$(curl -s \
@@ -93,13 +93,18 @@ result=$(echo "$response" | jq -r '.result')
 error=$(echo "$response" | jq -r '.error')
 errorMsg=$(echo "$response" | jq -r '.errorMsg')
 
-if [[ "$error" == "true" ]]; then
+if [[ "$result" == "error" ]]; then
+  if [[ "$errorMsg" == "unauthorized" ]]; then
+    echo "[secureflag-assignments] ERROR: Authentication failed. Please check your SECUREFLAG_API_TOKEN."
+    exit 1
+  else
+    echo "[secureflag-assignments] ERROR: API error - $errorMsg"
+    exit 1
+  fi
+elif [[ "$error" == "true" ]]; then
   if [[ "$errorMsg" == "EmptyUser" ]]; then
     echo "[secureflag-assignments] WARNING: skipping assignment verification, \"$USER_EMAIL\" is not a valid user in SecureFlag. Please ensure your email is registered, or export USER_EMAIL with a valid SecureFlag user email."
     exit 0
-  elif [[ "$errorMsg" == "unauthorized" ]]; then
-    echo "[secureflag-assignments] ERROR: Authentication failed. Please check your SECUREFLAG_API_TOKEN."
-    exit 1
   else
     # If it's a generic API error, just log it and allow the push
     echo "[secureflag-assignments] WARNING: skipping assignment verification, API returned $errorMsg"
