@@ -8,8 +8,8 @@ SECUREFLAG_API_TOKEN="${SECUREFLAG_API_TOKEN:-}"   # SecureFlag API token
 
 # Assignment requirement flags (set ONE at a time)
 # Default to checking initial assignments if no flag is explicitly set
-REQUIRE_COMPLETED_INITIAL_ASSIGNMENTS="${REQUIRE_COMPLETED_INITIAL_ASSIGNMENTS:-true}"
-REQUIRE_COMPLETED_PENDING_ASSIGNMENTS="${REQUIRE_COMPLETED_PENDING_ASSIGNMENTS:-}"
+REQUIRE_COMPLETED_PENDING_ASSIGNMENTS="${REQUIRE_COMPLETED_PENDING_ASSIGNMENTS:-true}"
+REQUIRE_COMPLETED_INITIAL_ASSIGNMENTS="${REQUIRE_COMPLETED_INITIAL_ASSIGNMENTS:-}"
 REQUIRE_NOT_EXPIRED_ASSIGNMENTS="${REQUIRE_NOT_EXPIRED_ASSIGNMENTS:-}"
 
 # Ensure required tools are available
@@ -82,7 +82,7 @@ fi
 # Note: Using a generic endpoint, adjust to actual SecureFlag API endpoint for assignments
 SECUREFLAG_API_ENDPOINT="${SECUREFLAG_API_ENDPOINT:-https://api.secureflag.com/rest/management/v2/users/hasCompletedTraining}"
 
-echo "[secureflag-assignments] Verifying $REQUIREMENT_NAME for $USER_EMAIL"
+echo "[secureflag-assignments] Verifying $REQUIREMENT_NAME for \"$USER_EMAIL\""
 response=$(curl -s \
   -H "Authorization: Bearer $SECUREFLAG_API_TOKEN" \
   -H "Content-Type: application/json" \
@@ -107,17 +107,16 @@ elif [[ "$error" == "true" ]]; then
     exit 0
   else
     # If it's a generic API error, just log it and allow the push
-    echo "[secureflag-assignments] WARNING: skipping assignment verification, API returned $errorMsg"
+    echo "[secureflag-assignments] WARNING: skipping assignment verification, API returned $errorMsg."
     exit 0
   fi
 elif [[ "$result" == "true" ]]; then
-  echo "[secureflag-assignments] Assignment verification succeeded: \"$USER_EMAIL\" meets requirement: $REQUIREMENT_NAME"
+  echo "[secureflag-assignments] Assignment verification succeeded: You have $REQUIREMENT_NAME."
   exit 0
 else
   echo
-  echo "[secureflag-assignments] ❌ Git push blocked. You must meet the following requirement before pushing:"
-  echo "- $REQUIREMENT_NAME"
+  echo "[secureflag-assignments] ❌ Git push blocked: You must have $REQUIREMENT_NAME before pushing."
   echo
-  echo "Visit https://www.secureflag.com/ to view your assignments."
+  echo "[secureflag-assignments] Visit https://www.secureflag.com/ to view your assignments."
   exit 1
 fi
