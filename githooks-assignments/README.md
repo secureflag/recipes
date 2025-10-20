@@ -2,6 +2,8 @@
 
 The `pre-push-assignments` hook enforces SecureFlag assignment completion requirements before allowing pushes.
 
+![Hook example](image.png "Hook example")
+
 ## What does it do?
 
 - Verifies that the user has met one of the configurable assignment requirements:
