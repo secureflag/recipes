@@ -43,3 +43,12 @@ Leverage the power of the SecureFlag APIs with a Python script that retrieves al
 This script demonstrates how to collect user details, fetch assignments and activities for each user, and export the combined results to a CSV report; giving you practical examples of API integration.
 
 💻 Read the [`documentation`](/users_assignments_report/) to download and customize the script to create the reports you need!
+
+## Users' assignment removal
+
+Easily remove SecureFlag assignments with a Python script that validates activities, resolves UUIDs, and removes user assignments through the APIs. 
+The script fetches fresh catalogs, checks input for errors, and provides clear per-user summaries on completion.
+
+⚠️ Solved activities cannot be removed, and unassigned activities must be reassigned manually or via the APIs.
+
+💻 Read the [`documentation`](/remove_assigned_activities/) to download and customize the script to remove assigned activities!
