@@ -7,10 +7,10 @@ Here you'll find handy scripts, code snippets, and small demo apps showcasing ho
 Whether you are exploring the API, testing out ideas, or looking for inspiration on how to integrate SecureFlag into your own organization, these examples are here to help you get up and running faster.
 
 - [SecureFlag Code Recipes Repository](#secureflag-code-recipes-repository)
-  * [Git Hook: SecureFlag Assignment Completion](#git-hook--secureflag-assignment-completion)
-  * [Git Hook: SecureFlag Training Based On GHSA Advisory](#git-hook--secureflag-training-based-on-ghsa-advisory)
-  * [Users' assignment report](#users--assignment-report)
-  * [Users' assignment removal](#users--assignment-removal)
+  * [Git Hook: SecureFlag Assignment Completion](#git-hook-secureflag-assignment-completion)
+  * [Git Hook: SecureFlag Training Based On GHSA Advisory](#git-hook-secureflag-training-based-on-ghsa-advisory)
+  * [Users' assignment report](#users-assignment-report)
+  * [Users' assignment removal](#users-assignment-removal)
 
 ## Git Hook: SecureFlag Assignment Completion
 
